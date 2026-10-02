@@ -9,7 +9,7 @@ A working Word Scramble game with:
 
 - A built-in dictionary pool of words chosen at random each round
 - A scrambling algorithm that randomizes letter order while ensuring the scrambled version differs from the original word
-- A custom `TextBox` input component handling alphabetic keystrokes, automatic uppercase conversion, and backspace[cite: 34, 35]
+- A custom `TextBox` input component handling alphabetic keystrokes, automatic uppercase conversion, and backspace
 - Interactive guess submission via the `Return` / `Enter` key or clicking the `SUBMIT` button
 - Real-time score tracking, spaced letter displays, and color-coded status messaging
 
@@ -44,19 +44,20 @@ Each task must be completed using an iterative process involving LLM suggestions
 
 ### Task 1: Fix the guess comparison validation bug
 
-When the player figures out the correct unscrambled word and types it into the text box, the game rejects it with a "WRONG GUESS! Try again." error. In game_engine.submit_guess(), the validation line checks is_correct = (guess == self.scrambled_word) instead of comparing the guess to self.secret_word. This erroneously forces the player to re-type the jumbled letters rather than unscrambling the word. Fix the equality check so guess is validated against self.secret_word.
+Typing the correct unscrambled word is rejected as incorrect, while re-entering the scrambled letter string registers as a valid answer. Correct the guess verification logic so submitted words are validated against the actual secret target word rather than the scrambled display text.
 
-### Task 2: Implement a hint system with letter reveals
+### Task 2: Implement a progressive hint system
 
-Some long words can be challenging to unscramble. Add a clickable HINT button beside SUBMIT. When clicked, reveal the first unrevealed letter of self.secret_word in its correct position (e.g., displaying P _ _ _ _ _ for PYTHON), while deducting a small point penalty from self.score.
+Challenging words can leave players stuck with no path forward. Add an interactive hint feature that reveals individual letters of the secret word in their correct positions upon request, applying a proportional score penalty for each hint used.
  
-### Task 3: Implement a round countdown timer
+### Task 3: Implement a active round countdown timer
 
-Currently, players have unlimited time to ponder each word. Add an active countdown timer bar (e.g., 20 seconds) in game_engine.render(). If the timer expires before a correct guess is entered, reveal the correct secret word, display a "TIME'S UP!" warning, and transition automatically to self.next_round().
+Players currently have unlimited time to ponder anagrams. Add a visible countdown timer bar to the round that ticks down during active play, automatically revealing the word and advancing to the next round if time runs out before a correct answer is submitted.
 
-### Task 4: Implement letter tile drag-and-drop or clickable letter sorting
+### Task 4: Implement Interactive Letter Tile Sorting
 
-Instead of reading scrambled letters as a static text string, render each scrambled letter inside its own graphical square tile. Allow players to click or drag tiles into a rearrangement rack to experiment with different anagram configurations before submitting.
+Scrambled letters are currently presented as a static text string. Replace the static label with interactive, graphical letter tiles that players can click or rearrange to physically experiment with different letter sequences before submitting a guess.
+
 ---
 
 ## Expected Behavior
