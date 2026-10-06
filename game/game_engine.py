@@ -45,7 +45,7 @@ class GameEngine:
             self.feedback_color = (240, 170, 50)
             return
 
-        is_correct = (guess == self.scrambled_word)
+        is_correct = (guess == self.secret_word)
 
         if is_correct:
             self.score += 1
