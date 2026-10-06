@@ -4,6 +4,8 @@ from game.text_box import TextBox
 
 
 class GameEngine:
+    ROUND_SECONDS = 20  # Task 3: time allowed per word
+
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -22,6 +24,10 @@ class GameEngine:
         self.submit_btn = pygame.Rect(row_left + 170, 210, 95, 46)
         self.hint_btn = pygame.Rect(row_left + 275, 210, 80, 46)
         self.hints_used = 0
+
+        # Task 3: timer state
+        self.round_start = 0
+        self.time_left = self.ROUND_SECONDS
 
         self.font_title = pygame.font.SysFont(None, 40)
         self.font_word = pygame.font.SysFont(None, 52)
@@ -42,6 +48,8 @@ class GameEngine:
         self.secret_word = random.choice(self.words)
         self.scrambled_word = self.scramble_string(self.secret_word)
         self.hints_used = 0
+        self.round_start = pygame.time.get_ticks()   # restart the timer
+        self.time_left = self.ROUND_SECONDS
         self.input_box.clear()
 
     def submit_guess(self):
@@ -86,7 +94,15 @@ class GameEngine:
                 self.use_hint()
 
     def update(self):
-        pass
+        # Task 3: count down and handle expiry
+        elapsed = (pygame.time.get_ticks() - self.round_start) / 1000
+        self.time_left = max(0, self.ROUND_SECONDS - elapsed)
+
+        if self.time_left <= 0:
+            # Reveal the answer in the message, then move on automatically
+            self.feedback_msg = f"TIME'S UP! The word was {self.secret_word}"
+            self.feedback_color = (240, 80, 80)
+            self.next_round()
 
     def render(self, screen):
         screen.fill((26, 30, 38))
@@ -96,6 +112,20 @@ class GameEngine:
 
         score_surf = self.font_msg.render(f"Score: {self.score}", True, (255, 220, 80))
         screen.blit(score_surf, (self.width // 2 - score_surf.get_width() // 2, 70))
+
+        # Task 3: countdown timer bar
+        bar_w, bar_h = 300, 10
+        bar_x = self.width // 2 - bar_w // 2
+        bar_y = 102
+        fraction = self.time_left / self.ROUND_SECONDS
+        if fraction > 0.5:
+            bar_color = (80, 230, 110)
+        elif fraction > 0.25:
+            bar_color = (240, 170, 50)
+        else:
+            bar_color = (240, 80, 80)
+        pygame.draw.rect(screen, (55, 60, 72), (bar_x, bar_y, bar_w, bar_h), border_radius=5)
+        pygame.draw.rect(screen, bar_color, (bar_x, bar_y, int(bar_w * fraction), bar_h), border_radius=5)
 
         spaced_letters = "  ".join(self.scrambled_word)
         scramble_surf = self.font_word.render(spaced_letters, True, (100, 200, 255))
