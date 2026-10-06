@@ -1,7 +1,8 @@
 import random
 import pygame
 from game.text_box import TextBox
- 
+
+
 class GameEngine:
     def __init__(self, width, height):
         self.width = width
@@ -15,8 +16,12 @@ class GameEngine:
         self.feedback_msg = "Unscramble the letters above!"
         self.feedback_color = (210, 215, 225)
 
-        self.input_box = TextBox(width // 2 - 130, 210, 160, 46)
-        self.submit_btn = pygame.Rect(width // 2 + 45, 210, 95, 46)
+        # Row layout: input (160) + gap + SUBMIT (95) + gap + HINT (80)
+        row_left = width // 2 - 177
+        self.input_box = TextBox(row_left, 210, 160, 46)
+        self.submit_btn = pygame.Rect(row_left + 170, 210, 95, 46)
+        self.hint_btn = pygame.Rect(row_left + 275, 210, 80, 46)
+        self.hints_used = 0
 
         self.font_title = pygame.font.SysFont(None, 40)
         self.font_word = pygame.font.SysFont(None, 52)
@@ -36,6 +41,7 @@ class GameEngine:
     def next_round(self):
         self.secret_word = random.choice(self.words)
         self.scrambled_word = self.scramble_string(self.secret_word)
+        self.hints_used = 0
         self.input_box.clear()
 
     def submit_guess(self):
@@ -45,6 +51,7 @@ class GameEngine:
             self.feedback_color = (240, 170, 50)
             return
 
+        # Task 1 fix: compare against the secret word, not the scrambled one
         is_correct = (guess == self.secret_word)
 
         if is_correct:
@@ -57,6 +64,16 @@ class GameEngine:
             self.feedback_color = (240, 80, 80)
             self.input_box.clear()
 
+    def use_hint(self):
+        if self.hints_used >= len(self.secret_word):
+            self.feedback_msg = "No more letters to reveal!"
+            self.feedback_color = (240, 170, 50)
+            return
+        self.hints_used += 1
+        self.score = max(0, self.score - 1)  # penalty, never below 0
+        self.feedback_msg = "Hint used: -1 point"
+        self.feedback_color = (240, 170, 50)
+
     def handle_event(self, event):
         self.input_box.handle_event(event)
 
@@ -65,6 +82,8 @@ class GameEngine:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.submit_btn.collidepoint(event.pos):
                 self.submit_guess()
+            elif self.hint_btn.collidepoint(event.pos):
+                self.use_hint()
 
     def update(self):
         pass
@@ -84,10 +103,25 @@ class GameEngine:
 
         self.input_box.render(screen)
 
+        # SUBMIT button
         pygame.draw.rect(screen, (50, 150, 85), self.submit_btn, border_radius=6)
         pygame.draw.rect(screen, (220, 220, 220), self.submit_btn, width=2, border_radius=6)
         btn_text = self.font_btn.render("SUBMIT", True, (255, 255, 255))
-        screen.blit(btn_text, (self.submit_btn.centerx - btn_text.get_width() // 2, self.submit_btn.centery - btn_text.get_height() // 2))
+        screen.blit(btn_text, (self.submit_btn.centerx - btn_text.get_width() // 2,
+                               self.submit_btn.centery - btn_text.get_height() // 2))
+
+        # HINT button
+        pygame.draw.rect(screen, (190, 140, 40), self.hint_btn, border_radius=6)
+        pygame.draw.rect(screen, (220, 220, 220), self.hint_btn, width=2, border_radius=6)
+        hint_text = self.font_btn.render("HINT", True, (255, 255, 255))
+        screen.blit(hint_text, (self.hint_btn.centerx - hint_text.get_width() // 2,
+                                self.hint_btn.centery - hint_text.get_height() // 2))
+
+        # Hint line: revealed letters, underscores for the rest
+        shown = [self.secret_word[i] if i < self.hints_used else "_"
+                 for i in range(len(self.secret_word))]
+        hint_line = self.font_word.render(" ".join(shown), True, (255, 200, 90))
+        screen.blit(hint_line, (self.width // 2 - hint_line.get_width() // 2, 320))
 
         feedback_surf = self.font_msg.render(self.feedback_msg, True, self.feedback_color)
         screen.blit(feedback_surf, (self.width // 2 - feedback_surf.get_width() // 2, 285))
